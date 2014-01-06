@@ -50,6 +50,7 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
 
     private static final String KEY_SCREEN_TIMEOUT = "screen_timeout";
     private static final String KEY_ACCELEROMETER = "accelerometer";
+    private static final String KEY_ALLOW_ALL_ROTATIONS = "allow_all_rotations";
     private static final String KEY_FONT_SIZE = "font_size";
     private static final String KEY_NOTIFICATION_PULSE = "notification_pulse";
     private static final String KEY_SCREEN_SAVER = "screensaver";
@@ -57,6 +58,7 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
     private static final int DLG_GLOBAL_CHANGE_WARNING = 1;
 
     private CheckBoxPreference mAccelerometer;
+    private CheckBoxPreference mAllowAllRotations;
     private WarnedListPreference mFontSizePref;
     private CheckBoxPreference mNotificationPulse;
 
@@ -89,7 +91,15 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
             // if the device supports rotation.
             getPreferenceScreen().removePreference(mAccelerometer);
         }
-
+        mAllowAllRotations = (CheckBoxPreference) findPreference(KEY_ALLOW_ALL_ROTATIONS);
+        try {
+            mAllowAllRotations.setChecked(Settings.System.getInt(resolver,
+                    Settings.System.ALLOW_ALL_ROTATIONS) == 1);
+            mAllowAllRotations.setOnPreferenceChangeListener(this);
+        } catch (SettingNotFoundException snfe) {
+            Log.e(TAG, Settings.System.ALLOW_ALL_ROTATIONS + " not found");
+        }
+        
         mScreenSaverPreference = findPreference(KEY_SCREEN_SAVER);
         if (mScreenSaverPreference != null
                 && getResources().getBoolean(
@@ -290,6 +300,11 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
         } else if (preference == mNotificationPulse) {
             boolean value = mNotificationPulse.isChecked();
             Settings.System.putInt(getContentResolver(), Settings.System.NOTIFICATION_LIGHT_PULSE,
+                    value ? 1 : 0);
+            return true;
+        } else if (preference == mAllowAllRotations) {
+            boolean value = mAllowAllRotations.isChecked();
+            Settings.System.putInt(getContentResolver(), Settings.System.ALLOW_ALL_ROTATIONS,
                     value ? 1 : 0);
             return true;
         }
